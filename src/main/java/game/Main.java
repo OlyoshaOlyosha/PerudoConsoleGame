@@ -1,6 +1,5 @@
 package game;
 
-import players.ComputerPlayer;
 import players.Player;
 
 import java.io.BufferedReader;
@@ -17,19 +16,23 @@ public class Main {
         while (true) {
             System.out.println("""
                     
+                    
                     a. Начать игру
                     b. Правила игры
                     c. Выйти""");
             String choice;
             Scanner sc = new Scanner(System.in);
-            choice = sc.nextLine().substring(0, 1);
+            choice = "a";
+
+            // choice = sc.nextLine().substring(0, 1);
 
             List<Player> players = new ArrayList<>();
 
             switch (choice) {
                 case "a":
-                    // Список игроков
-                    int numberOfPlayers = getNumberOfPlayers();
+                    // Количество игроков
+                    int numberOfPlayers = 4;
+                    // int numberOfPlayers = getNumberOfPlayers();
 
                     // Задать имя компьютерам
                     String[] namePlayersArray = generateRandomName(numberOfPlayers);
@@ -37,9 +40,13 @@ public class Main {
                     namePlayersArray[numberOfPlayers-1] = getNamePlayers();
 
 
-                    for (int i = 0; i < numberOfPlayers; i++){
-                        System.out.println(namePlayersArray[i]);
-                    }
+
+
+                    // Начальные параметры игры
+                    int[] diceCountsArray = initializeGame(namePlayersArray);
+
+                    // Старт игры
+                    startGame(namePlayersArray, diceCountsArray);
                     break;
                 case "b":
                     getGameRules();
@@ -50,6 +57,53 @@ public class Main {
         }
 
     }
+
+    private static int[] initializeGame(String[] namePlayersArray) {
+        int[] diceCountsArray = new int[namePlayersArray.length];
+        for (int i = 0; i < namePlayersArray.length; i++) {
+            diceCountsArray[i] = 5;
+        }
+        return diceCountsArray;
+    }
+
+    // Начало игры, цикл
+    private static void startGame(String[] namePlayersArray, int[] diceCountsArray) {
+        Random rand = new Random();
+        int[] numbersDiceCountsArray = new int[diceCountsArray.length];
+        boolean hasWinner = false;
+
+        // Жеребьёвка
+        System.out.println("Начало игры. Жеребьёвка:");
+        while (!hasWinner) {
+            int maxRoll = 0;
+            List<String> playersWithMaxRoll = new ArrayList<>(); // Массив игроков, для переигровки
+
+            for (String player : namePlayersArray) {
+                int number = rand.nextInt(1, 7);
+                System.out.println("У " + player + " выпало: " + number);
+
+                // Определяем максимальное значение и игроков с ним
+                if (number > maxRoll) {
+                    maxRoll = number;
+                    playersWithMaxRoll.clear();
+                    playersWithMaxRoll.add(player);
+                } else if (number == maxRoll) {
+                    playersWithMaxRoll.add(player);
+                }
+            }
+
+            // Проверка на наличие победителя
+            if (playersWithMaxRoll.size() == 1) {
+                hasWinner = true;
+                System.out.println("\nПобедитель: " + playersWithMaxRoll.get(0));
+            } else {
+                System.out.println("\nНичья! Переигровка между игроками: " + playersWithMaxRoll);
+                // Переигровка среди игроков с максимальным значением
+                namePlayersArray = playersWithMaxRoll.toArray(new String[0]);
+            }
+        }
+    }
+
     // Вывести правила в консоль
     public static void getGameRules() throws IOException {
         BufferedReader br = new BufferedReader(new FileReader("src/main/java/game/rules.txt"));
@@ -66,7 +120,7 @@ public class Main {
         int numberOfPlayers;
         while (true) {
             try {
-                System.out.println("Сколько будет игроков? (от 2 до 4):");
+                System.out.println("\nСколько будет игроков? (от 2 до 4):");
                 numberOfPlayers = sc.nextInt();
 
                 if (numberOfPlayers >= 2 && numberOfPlayers <= 4) {
@@ -106,7 +160,7 @@ public class Main {
         // Массив имён для генерации
         String[] nameGeneration  = {"Константин", "Максим", "Дарья", "Виктория", "Артур", "Тимофей", "Алексей", "Иван", "Дмитрий", "Мария", "Станислав", "Никита"};
 
-        System.out.println("Придумайте или сгенерируйте имя");
+        System.out.println("\nПридумайте или сгенерируйте имя");
         // Выбор имени для игрока
         String namePlayer = "";
 
