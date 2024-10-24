@@ -5,10 +5,7 @@ import players.Player;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Random;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -22,29 +19,22 @@ public class Main {
                     c. Выйти""");
             String choice;
             Scanner sc = new Scanner(System.in);
-            choice = "a";
-
-            // choice = sc.nextLine().substring(0, 1);
+            choice = sc.nextLine().substring(0, 1);
 
             List<Player> players = new ArrayList<>();
 
             switch (choice) {
                 case "a":
                     // Количество игроков
-                    int numberOfPlayers = 4;
-                    // int numberOfPlayers = getNumberOfPlayers();
+                    int numberOfPlayers = getNumberOfPlayers();
 
                     // Задать имя компьютерам
                     String[] namePlayersArray = generateRandomName(numberOfPlayers);
                     // Задать имя игроку
                     namePlayersArray[numberOfPlayers-1] = getNamePlayers();
 
-
-
-
                     // Начальные параметры игры
                     int[] diceCountsArray = initializeGame(namePlayersArray);
-
                     // Старт игры
                     startGame(namePlayersArray, diceCountsArray);
                     break;
@@ -57,7 +47,7 @@ public class Main {
         }
 
     }
-
+    // Начальные параметры игры, у каждого игрока по 5 костей
     private static int[] initializeGame(String[] namePlayersArray) {
         int[] diceCountsArray = new int[namePlayersArray.length];
         for (int i = 0; i < namePlayersArray.length; i++) {
@@ -69,7 +59,6 @@ public class Main {
     // Начало игры, цикл
     private static void startGame(String[] namePlayersArray, int[] diceCountsArray) {
         Random rand = new Random();
-        int[] numbersDiceCountsArray = new int[diceCountsArray.length];
         boolean hasWinner = false;
 
         // Жеребьёвка
@@ -96,12 +85,30 @@ public class Main {
             if (playersWithMaxRoll.size() == 1) {
                 hasWinner = true;
                 System.out.println("\nПобедитель: " + playersWithMaxRoll.get(0));
+
+                // Получить индекс игрока по имени
+                int winnerIndex = 0;
+                for (int i = 0; i < namePlayersArray.length; i++) {
+                    if (namePlayersArray[i].equals(playersWithMaxRoll.get(0))) {
+                        winnerIndex = i;
+                    }
+                }
+
+                // Сдвинуть победителя на первый индекс
+                for (int i = winnerIndex; i > 0; i--) {
+                    namePlayersArray[i] = namePlayersArray[i - 1];
+                }
+                namePlayersArray[0] = playersWithMaxRoll.get(0);
+
             } else {
                 System.out.println("\nНичья! Переигровка между игроками: " + playersWithMaxRoll);
                 // Переигровка среди игроков с максимальным значением
                 namePlayersArray = playersWithMaxRoll.toArray(new String[0]);
             }
         }
+
+        // Ход первого игрока
+
     }
 
     // Вывести правила в консоль
