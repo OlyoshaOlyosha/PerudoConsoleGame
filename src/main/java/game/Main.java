@@ -13,7 +13,8 @@ public class Main {
         System.out.println("\nДобро пожаловать в игру Перудо.");
         label:
         while (true) {
-            System.out.println("""           
+            System.out.println("""
+                    
                     1. Начать игру
                     2. Правила игры
                     3. Выйти
@@ -51,7 +52,7 @@ public class Main {
                         System.out.println("Не выбран ни один из вариантов. Повторите попытку\n");
                         break;
                 }
-            } catch (java.util.InputMismatchException e) {
+            } catch (InputMismatchException e) {
                 System.out.println("Ошибка! Ввод должен быть числом. Попробуйте снова.\n");
                 sc.nextLine();
             }
@@ -62,7 +63,7 @@ public class Main {
     private static int[] initializeGame(String[] namePlayersArray) {
         int[] diceCountsArray = new int[namePlayersArray.length];
         for (int i = 0; i < namePlayersArray.length; i++) {
-            diceCountsArray[i] = 5;
+            diceCountsArray[i] = 1;
         }
         return diceCountsArray;
     }
@@ -74,9 +75,13 @@ public class Main {
         boolean hasWinner = false;
         String humanName = namePlayersArray[numberOfPlayers - 1];
         Player[] players = new Player[numberOfPlayers];
+        int previousBidQuantity = 0;
+        int previousBidValue = 1;
+        int lastPlayerWhoSaidNoBelieve = -1; // Индекс игрока, который сказал "Не верю"
+        int lastPlayerWhoMadeBid = -1; // Индекс игрока, который сделал ставку
 
         // Жеребьёвка
-        System.out.println("Начало игры. Жеребьёвка:");
+        System.out.println("\nНачало игры. Жеребьёвка:");
         while (!hasWinner) {
             int maxRoll = 0;
             List<String> playersWithMaxRoll = new ArrayList<>(); // Массив игроков, для переигровки
@@ -99,7 +104,7 @@ public class Main {
             // Проверка на наличие победителя
             if (playersWithMaxRoll.size() == 1) {
                 hasWinner = true;
-                System.out.println("\nПобедитель: " + playersWithMaxRoll.get(0));
+                System.out.println("\nПобедитель: " + playersWithMaxRoll.get(0) + "\n\n");
 
                 // Получить индекс игрока по имени
                 int winnerIndex = 0;
@@ -131,54 +136,187 @@ public class Main {
             }
         }
 
-
-        // Ход первого игрока
-        int whoMakeMove = 0;
+        System.out.println("Начало игры!");
+        // Ход игроков
         boolean gameContinues = true;
-        int quantity = 0;
-        int value = 0;
-        int diceCount = numberOfPlayers * 5;
+        boolean firstMove = true;
+        int[][] diceValues = null;
+
+        // Бросок костей
+        diceValues = rollDice(namePlayersArray, diceCountsArray);
+        int[] numberDifferentDice = countDiffDice(namePlayersArray, diceValues);
+
+        // Сумма костей всех игроков
+        System.out.print("00 Сумма костей игроков: " + Arrays.toString(numberDifferentDice) + "\n");
 
         while (gameContinues) {
             for (int i = 0; i < namePlayersArray.length; i++) {
                 String currentPlayer = namePlayersArray[i];
-                System.out.println("Ходит игрок " + currentPlayer);
+                System.out.println("\nХодит игрок " + currentPlayer);
 
-                // Каждый бросает свои кости, не показывая другим
-                int[][] results = rollDice(namePlayersArray, diceCountsArray); // Получаем результаты
+                // Логика ставок
+                int quantity = 0;
+                int value = 1;
+                boolean saidNoBelieve = false;
 
-                // Вывод всех выпавших костей игрока
-                int playerIndex = 0; // Индекс игрока (например, Игрок 1)
-                System.out.print("Кости " + namePlayersArray[playerIndex] + ": ");
-                for (int valueD : results[playerIndex]) {
-                    System.out.print(valueD + " ");
-                }
+                // Ставки
+                assert players[i] != null;
+                if (players[i] != null & players[i].isHuman()) {
+                    // Ввод ставки от человека
+                    boolean validBid = false;
+                    while (!validBid) {
+                        if (firstMove) {
+                            firstMove = false;
 
-                // Если игрок человек
-                if (players[i].isHuman()) {
-                    quantity = sc.nextInt();
-                    value = sc.nextInt();
-                }
-                // Если игрок бот
-                else {
-                    System.out.println("bot");
-                    // Ход бота: 60% повышение и 40% не верю. Если некуда повышать - не верю
-                    int choiceChance = rand.nextInt(0, 100);
-                    if (choiceChance < 60) {
-                        if (diceCount != 0) {
-                            quantity += 1;
-                            value = rand.nextInt(1, 7);
+                            System.out.print("Введите количество костей и номинал: ");
+                            quantity = sc.nextInt();
+                            value = sc.nextInt();
                         } else {
-                            System.out.println("Не верю");
+                            System.out.println("Введите количество костей и номинал (или '0 0' для 'Не верю')");
+                            System.out.print("Количество костей: ");
+                            quantity = sc.nextInt();
+                            System.out.print("Номинал: ");
+                            value = sc.nextInt();
+
+                            if (quantity == 0 && value == 0) {
+                                lastPlayerWhoSaidNoBelieve = i; // Игрок говорит "Не верю"
+                                System.out.println(currentPlayer + " говорит: Не верю!");
+                                saidNoBelieve = true;
+                                break;
+                            }
                         }
-                    } else {
-                        System.out.println("Не верю");
+
+                        // Проверка на корректность ставки
+                        if (isValidBid(quantity, value, previousBidQuantity, previousBidValue, firstMove)) {
+                            validBid = true;
+                            lastPlayerWhoMadeBid = i; // Запоминаем индекс игрока, который сделал ставку
+                        } else {
+                            System.out.println("Некорректная ставка. Попробуйте снова.");
+                        }
+                    }
+                } else {
+                    // Логика для бота
+                    if (firstMove) {
+                        firstMove = false;
+
+                        // Генерация новой ставки
+                        quantity = previousBidQuantity + 1;
+                        value = rand.nextInt(1, 7);
+                        if (quantity > diceCountsArray[i]) {
+                            quantity = previousBidQuantity;
+                        }
+
+                        System.out.println(currentPlayer + ": " + quantity + " " + value);
+                        lastPlayerWhoMadeBid = i;
+                    } else{
+                        if (rand.nextDouble() < 0.4) { // 40% вероятность сказать "Не верю!"
+                            System.out.println(currentPlayer + " говорит: Не верю!");
+                            saidNoBelieve = true;
+                            lastPlayerWhoSaidNoBelieve = i;
+                        } else {
+                            // Генерация новой ставки
+                            quantity = previousBidQuantity + 1;
+                            value = previousBidValue;
+                            if (quantity > diceCountsArray[i]) {
+                                quantity = previousBidQuantity;
+                            }
+
+                            System.out.println(currentPlayer + ": " + quantity + " " + value);
+                            lastPlayerWhoMadeBid = i;
+                        }
                     }
                 }
+
+                if (saidNoBelieve) {
+                    // Логика вскрытия костей
+                    System.out.println(previousBidQuantity + " " + previousBidValue);
+                    boolean isTruth = checkTruth(previousBidValue, previousBidQuantity, numberDifferentDice);
+                    int losingPlayerIndex = -1;
+
+                    if (isTruth) {
+                        // Если ставка была правдой, игрок, который сказал "Не верю", теряет кость
+                        losingPlayerIndex = findPlayerIndexWhoSaidNoBelieve(players, namePlayersArray, lastPlayerWhoSaidNoBelieve);
+                        diceCountsArray[losingPlayerIndex]--;
+                        firstMove = true;
+                        System.out.println("Ставка была правдой. " + namePlayersArray[losingPlayerIndex] + " теряет кость. Осталось: " + diceCountsArray[losingPlayerIndex]);
+                    } else {
+                        // Если ставка была ложной, игрок, который сделал ставку, теряет кость
+                        losingPlayerIndex = findPlayerIndexWhoMadeBid(players, namePlayersArray, lastPlayerWhoMadeBid);
+                        diceCountsArray[losingPlayerIndex]--;
+                        firstMove = true;
+                        System.out.println("Ставка была ложной. " + namePlayersArray[losingPlayerIndex] + " теряет кость. Осталось: " + diceCountsArray[losingPlayerIndex]);
+                    }
+
+                    // Проверка на наличие проигравшего
+                    if (diceCountsArray[losingPlayerIndex] <= 0) {
+                        System.out.println(namePlayersArray[losingPlayerIndex] + " больше не имеет костей и выбывает из игры!");
+
+                        if (players[losingPlayerIndex].isHuman()){
+                            gameContinues = false;
+                            System.out.println("Игра окончена.");
+                            break;
+                        }
+
+                        // Удаляем игрока из игры
+                        players[losingPlayerIndex] = null;
+                        numberOfPlayers--;
+                        // Проверяем, остался ли только один игрок
+                        if (numberOfPlayers == 1) {
+                            System.out.println("Поздравляем! " + namePlayersArray[findLastPlayer(diceCountsArray)] + " победил!");
+                            hasWinner = true; // Завершаем игру
+                        }
+                    }
+                    // Бросок костей
+                    diceValues = rollDice(namePlayersArray, diceCountsArray);
+                    numberDifferentDice = countDiffDice(namePlayersArray, diceValues);
+
+                    // Сумма костей всех игроков
+                    System.out.print("00 Сумма костей игроков: " + Arrays.toString(numberDifferentDice) + "\n");
+                }
+
+                // Обновляем предыдущую ставку
+                previousBidQuantity = quantity;
+                previousBidValue = value;
             }
-            break;
         }
     }
+
+    // Метод для нахождения последнего игрока
+    private static int findLastPlayer(int[] diceCountsArray) {
+        for (int i = 0; i < diceCountsArray.length; i++) {
+            if (diceCountsArray[i] > 0) {
+                return i; // Возвращаем индекс последнего игрока с костями
+            }
+        }
+        return -1; // Не найден игрок
+    }
+
+    // Пример функции для проверки правоты ставки
+    private static boolean
+    checkTruth(int bidValue, int bidQuantity, int[] numberDifferentDice) {
+        return bidQuantity >= numberDifferentDice[bidValue-1];
+    }
+
+    // Метод для проверки корректности ставки
+    private static boolean isValidBid(int quantity, int value, int previousBidQuantity, int previousBidValue, boolean firstMove) {
+        // Ставка должна быть выше предыдущей
+        if ((quantity > previousBidQuantity || (quantity == previousBidQuantity && value != previousBidValue)) & quantity <= 6 & quantity >= 1 & !firstMove) {
+            return true;
+        }
+        return false;
+    }
+
+    // Функция для нахождения индекса игрока, который сказал "Не верю"
+    private static int findPlayerIndexWhoSaidNoBelieve(Player[] players, String[] namePlayersArray, int lastPlayerWhoSaidNoBelieve) {
+        return lastPlayerWhoSaidNoBelieve;
+    }
+
+
+    // Функция для нахождения индекса игрока, который сделал ставку
+    private static int findPlayerIndexWhoMadeBid(Player[] players, String[] namePlayersArray, int lastPlayerWhoMadeBid) {
+        return lastPlayerWhoMadeBid;
+    }
+
 
     public static int[][] rollDice(String[] namePlayersArray, int[] diceCountsArray) {
         int[][] diceValues = new int[namePlayersArray.length][];
@@ -192,16 +330,46 @@ public class Main {
             }
         }
 
-        // Выводим результаты. Не отображается в самой игре.
-        for (int i = 0; i < namePlayersArray.length; i++) {
-            System.out.print(namePlayersArray[i] + ": ");
-            for (int value : diceValues[i]) {
-                System.out.print(value + " ");
-            }
-            System.out.println();
-        }
+//        // Выводим результаты. Часть кода для отладки
+//        for (int i = 0; i < namePlayersArray.length; i++) {
+//            System.out.print(namePlayersArray[i] + ": ");
+//            for (int value : diceValues[i]) {
+//                System.out.print(value + " ");
+//            }
+//            System.out.println();
+//        }
 
         return diceValues;
+    }
+
+    // Считаем количество номинала кости каждого игрока в сумме
+    public static int[] countDiffDice(String[] namePlayersArray, int[][] diceValues) {
+        int[] numberDifferentDice = {0, 0, 0, 0, 0, 0};
+        for (int i = 0; i < namePlayersArray.length; i++) {
+            for (int value : diceValues[i]) {
+                switch (value) {
+                    case 1:
+                        numberDifferentDice[0]++;
+                        break;
+                    case 2:
+                        numberDifferentDice[1]++;
+                        break;
+                    case 3:
+                        numberDifferentDice[2]++;
+                        break;
+                    case 4:
+                        numberDifferentDice[3]++;
+                        break;
+                    case 5:
+                        numberDifferentDice[4]++;
+                        break;
+                    case 6:
+                        numberDifferentDice[5]++;
+                        break;
+                }
+            }
+        }
+        return numberDifferentDice;
     }
 
     // Вывести правила в консоль
@@ -265,25 +433,25 @@ public class Main {
 
         // Выбор имени для игрока
         String namePlayer = "";
-        String choice;
+        int choice;
         while (true) {
             System.out.println("""
-                    a. Написать имя
-                    b. Сгенерировать имя""");
+                    1. Написать имя
+                    2. Сгенерировать имя""");
             System.out.print("Выбор: ");
-            choice = sc.nextLine();
+            choice = sc.nextInt();
 
-            if (choice.equals("a")) {
-                namePlayer = sc.nextLine();
+            if (choice == 1) {
+                namePlayer = "TESTPLAYER";
+                // namePlayer = sc.nextLine();
                 break;
-            } else if (choice.equals("b")) {
+            } else if (choice == 2) {
                 namePlayer = nameGeneration[rnd.nextInt(nameGeneration.length)] + rnd.nextInt(0, 100000);
                 break;
             } else {
                 System.out.println("Не выбран ни один из вариантов. Повторите попытку\n");
             }
         }
-
         return namePlayer;
     }
 }
