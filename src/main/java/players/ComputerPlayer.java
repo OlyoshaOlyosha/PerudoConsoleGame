@@ -1,32 +1,22 @@
-//package players;
-//
-//import java.util.Random;
-//
-//public class ComputerPlayer extends Player {
-//    public ComputerPlayer(String name, int diceCount) {
-//        super(name, diceCount);
-//    }
-//
-//    @Override
-//    public void makeBid(int quantity, int value) {
-//        Random rnd = new Random();
-//
-//        int chance = rnd.nextInt(100);
-//        if (chance < 60) {
-//            if (value < 6) {
-//                value += 1;
-//            }
-//            else if (value == 6) {}
-//        }
-//        else {
-//
-//        }
-//
-//        super.makeBid(quantity, value);
-//    }
-//
-//    // Показать кости игроков, не реализовано
-////    public void revealDice() {
-////        System.out.println("Игрок " + this.getName() + " Показывает кости: " + Arrays.toString(dice));
-////    }
-//}
+package players;
+
+import java.util.Random;
+
+public class ComputerPlayer {
+    // Генерация имён для компьютеров
+    public static String[] generateRandomName(int numberOfPlayers) {
+        Random rnd = new Random();
+
+        // Массив имён для генерации
+        String[] nameGeneration = {"Константин", "Максим", "Дарья", "Виктория", "Артур", "Тимофей", "Алексей", "Иван", "Дмитрий", "Мария", "Станислав", "Никита"};
+
+        // Пустой массив имён для компьютеров
+        String[] nameComputerArray = new String[numberOfPlayers];
+
+        for (int i = 0; i < numberOfPlayers - 1; i++) {
+            nameComputerArray[i] = nameGeneration[rnd.nextInt(nameGeneration.length)] + rnd.nextInt(0, 100000);
+        }
+
+        return nameComputerArray;
+    }
+}
