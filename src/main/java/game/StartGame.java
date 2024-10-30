@@ -2,7 +2,6 @@ package game;
 
 import players.Player;
 
-import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.Random;
 import java.util.Scanner;
@@ -76,7 +75,7 @@ public class StartGame {
                                 }
 
                                 // Проверка на корректность ставки
-                                if (Bid.isValidBid(quantity, value, previousBidQuantity, previousBidValue, firstMove, countDice)) {
+                                if (Bid.isValidBid(quantity, value, previousBidQuantity, firstMove, countDice)) {
                                     lastPlayerWhoMadeBid = i; // Запоминаем индекс игрока, который сделал ставку
                                     validBid = true;
                                 } else {

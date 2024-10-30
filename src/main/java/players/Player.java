@@ -4,16 +4,12 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class Player {
-    private String name;
+    private final String name;
     private final boolean isHuman;
 
     public Player (String name, boolean isHuman) {
         this.name = name;
         this.isHuman = isHuman;
-    }
-
-    public String getName() {
-        return name;
     }
 
     @Override

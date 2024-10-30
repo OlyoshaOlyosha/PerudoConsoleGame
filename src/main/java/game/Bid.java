@@ -1,6 +1,5 @@
 package game;
 
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Bid {
@@ -21,7 +20,7 @@ public class Bid {
     }
 
     // Метод для проверки корректности ставки
-    public static boolean isValidBid(int quantity, int value, int previousBidQuantity, int previousBidValue, boolean firstMove, int countDice) {
+    public static boolean isValidBid(int quantity, int value, int previousBidQuantity, boolean firstMove, int countDice) {
         // Ставка должна быть выше предыдущей
         return quantity > previousBidQuantity && value <= 6 && value >= 1 && !firstMove && quantity <= countDice;
     }
